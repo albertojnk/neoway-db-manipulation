@@ -36,10 +36,10 @@ For this project there is only one prerequisite, you must have Docker installed 
 The usage is very simple. After the project is up and running, send a request to the app with the base_teste.txt file.
 
 example:
-    ```sh
-    curl --location --request POST 'http://localhost:8080/file' \
-    --form 'file=@"/[<path-to-file>]/base_teste.txt"'
-    ```
+   ```sh
+   curl --location --request POST 'http://localhost:8080/file' \
+   --form 'file=@"/[<path-to-file>]/base_teste.txt"'
+   ```
 
 When you make this request, the server will parse the base_teste.txt data and save the data into a Postgres database.
 To access this database is also very simple.
