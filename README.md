@@ -74,4 +74,3 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 Alberto Janicke - [@albertojnk](https://www.linkedin.com/in/alberto-janicke-b81b8b145/) - albertojanicke@live.com
 
-Project Link: [https://github.com/your_username/repo_name](https://github.com/your_username/repo_name)
