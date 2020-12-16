@@ -38,7 +38,7 @@ The usage is very simple. After the project is up and running, send a request to
 example:
    ```sh
    curl --location --request POST 'http://localhost:8080/file' \
-   --form 'file=@"/[<path-to-file>]/base_teste.txt"'
+   --form 'file=@"/<path-to-file>/base_teste.txt"'
    ```
 
 When you make this request, the server will parse the base_teste.txt data and save the data into a Postgres database.
