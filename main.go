@@ -10,9 +10,7 @@ import (
 )
 
 func main() {
-
-	db := datasource.StartDB()
-	defer db.Close()
+	datasource.StartDB()
 
 	service, err := NewService()
 	if err != nil {
@@ -20,7 +18,6 @@ func main() {
 	}
 
 	service.Start()
-
 }
 
 // Service serves a router

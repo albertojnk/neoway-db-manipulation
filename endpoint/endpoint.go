@@ -18,7 +18,7 @@ func Start() *echo.Echo {
 	// Cors
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
-		AllowMethods: []string{echo.GET},
+		AllowMethods: []string{echo.GET, echo.POST},
 	}))
 
 	e.GET("/", homePage)

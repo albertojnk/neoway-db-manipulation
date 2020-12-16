@@ -9,17 +9,13 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unicode"
 
 	"github.com/albertojnk/neoway-db-manipulation/datasource"
 	"github.com/cuducos/go-cnpf"
 	"github.com/labstack/echo"
-	"golang.org/x/text/transform"
-	"golang.org/x/text/unicode/norm"
 )
 
 func uploadFileHandler(c echo.Context) error {
-
 	file, err := c.FormFile("file")
 	if err != nil {
 		log.Println("error while reading file, err: ", err)
@@ -34,7 +30,6 @@ func uploadFileHandler(c echo.Context) error {
 
 	defer src.Close()
 
-	// Destination
 	dst, err := os.Create(file.Filename)
 	if err != nil {
 		return err
@@ -42,7 +37,6 @@ func uploadFileHandler(c echo.Context) error {
 	defer dst.Close()
 	defer os.Remove(file.Filename)
 
-	// Copy
 	if _, err = io.Copy(dst, src); err != nil {
 		return err
 	}
@@ -51,20 +45,25 @@ func uploadFileHandler(c echo.Context) error {
 
 	indexes := getStartIndexes(lines[1])
 
-	// headers := getHeaders(lines[0], indexes)
-
 	rawData := lines[1:]
 
 	data := parseData(rawData, indexes)
 
-	return c.JSON(http.StatusOK, data)
+	err = datasource.BulkCreateClientInfo(data)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, "failed to save data into db")
+	}
+
+	return c.JSON(http.StatusCreated, data)
 }
 
-func parseData(rawData []string, indexes []int) map[int]datasource.ClientInfo {
+func parseData(rawData []string, indexes []int) []datasource.ClientInfo {
 
-	client := map[int]datasource.ClientInfo{}
-	for j, rd := range rawData {
+	client := make([]datasource.ClientInfo, 0)
+	for _, rd := range rawData {
 		line := make([]string, 0)
+
+		// get data from rawData based on the startIndex of each value and append the values to line
 		for i, v := range indexes {
 			if i < len(indexes)-1 {
 				newLine := rd[v:indexes[i+1]]
@@ -77,9 +76,6 @@ func parseData(rawData []string, indexes []int) map[int]datasource.ClientInfo {
 			line = append(line, newLine)
 		}
 
-		if !cnpf.IsValid(line[0]) || !cnpf.IsValid(line[6]) || !cnpf.IsValid(line[7]) {
-			continue
-		}
 		cpf := cnpf.Unmask(line[0])
 		private, _ := strconv.ParseBool(line[1])
 		incomplete, _ := strconv.ParseBool(line[2])
@@ -89,16 +85,19 @@ func parseData(rawData []string, indexes []int) map[int]datasource.ClientInfo {
 		freqStore := cnpf.Unmask(line[6])
 		lastStore := cnpf.Unmask(line[7])
 
-		client[j] = datasource.ClientInfo{
-			CPF:                cpf,
-			Private:            private,
-			Incomplete:         incomplete,
-			LastPurchaseDate:   lastPurchaseDate,
-			AverageBudget:      avgBudget,
-			LastPurchaseBudget: lastBudget,
-			MostFrequentStore:  freqStore,
-			LastPurchaseStore:  lastStore,
-		}
+		client = append(client, datasource.ClientInfo{
+			CPF:                  strings.ToUpper(cpf),
+			IsValidCPF:           cnpf.IsValid(line[0]),
+			Private:              private,
+			Incomplete:           incomplete,
+			LastPurchaseDate:     lastPurchaseDate,
+			AverageBudget:        avgBudget,
+			LastPurchaseBudget:   lastBudget,
+			MostFrequentStore:    strings.ToUpper(freqStore),
+			IsValidFrequentStore: cnpf.IsValid(line[6]),
+			LastPurchaseStore:    strings.ToUpper(lastStore),
+			IsValidLastStore:     cnpf.IsValid(line[7]),
+		})
 	}
 
 	return client
@@ -127,28 +126,6 @@ func readFileLines(filename string) []string {
 	}
 
 	return lines
-
-}
-
-func getHeaders(s string, indexes []int) []string {
-	// removes accents from the header
-	t := transform.Chain(norm.NFD, transform.RemoveFunc(isMn), norm.NFC)
-	lineOne, _, _ := transform.String(t, s)
-
-	headers := make([]string, 0)
-	for i, v := range indexes {
-		if i < len(indexes)-1 {
-			headers = append(headers, lineOne[v:indexes[i+1]])
-			continue
-		}
-		headers = append(headers, lineOne[v:])
-	}
-
-	for _, v := range headers {
-		log.Println(v)
-	}
-
-	return headers
 }
 
 func getStartIndexes(s string) []int {
@@ -165,8 +142,4 @@ func getStartIndexes(s string) []int {
 	}
 
 	return indexes
-}
-
-func isMn(r rune) bool {
-	return unicode.Is(unicode.Mn, r)
 }
