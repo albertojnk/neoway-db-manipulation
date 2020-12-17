@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Nhanderu/brdoc"
 	"github.com/albertojnk/neoway-db-manipulation/datasource"
 	"github.com/cuducos/go-cnpf"
 	"github.com/labstack/echo"
@@ -87,16 +88,16 @@ func parseData(rawData []string, indexes []int) []datasource.ClientInfo {
 
 		client = append(client, datasource.ClientInfo{
 			CPF:                  strings.ToUpper(cpf),
-			IsValidCPF:           cnpf.IsValid(line[0]),
+			IsValidCPF:           brdoc.IsCPF(line[0]),
 			Private:              private,
 			Incomplete:           incomplete,
 			LastPurchaseDate:     lastPurchaseDate,
 			AverageBudget:        avgBudget,
 			LastPurchaseBudget:   lastBudget,
 			MostFrequentStore:    strings.ToUpper(freqStore),
-			IsValidFrequentStore: cnpf.IsValid(line[6]),
+			IsValidFrequentStore: brdoc.IsCNPJ(line[6]),
 			LastPurchaseStore:    strings.ToUpper(lastStore),
-			IsValidLastStore:     cnpf.IsValid(line[7]),
+			IsValidLastStore:     brdoc.IsCNPJ(line[7]),
 		})
 	}
 
